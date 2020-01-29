@@ -1,0 +1,30 @@
+import Sequelize, { Model } from 'sequelize';
+import bcrypt from 'bcryptjs';
+
+class Users extends Model {
+  static init(sequelize) {
+    super.init(
+      {
+        name: Sequelize.STRING,
+        email: Sequelize.STRING,
+        passwordHash: Sequelize.STRING,
+        password: Sequelize.VIRTUAL
+      },
+      {
+        sequelize
+      }
+    );
+    this.addHook('beforeSave', async user => {
+      if (user.password) {
+        user.passwordHash = await bcrypt.hash(user.password, 8);
+      }
+    });
+    return this;
+  }
+
+  checkPassword(password) {
+    return bcrypt.compare(password, this.passwordHash);
+  }
+}
+
+export default Users;
