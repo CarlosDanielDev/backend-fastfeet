@@ -2,7 +2,8 @@ import * as Yup from 'yup';
 import Deliveries from '../models/Deliveries';
 import Recipients from '../models/Recipients';
 import Couriers from '../models/Couriers';
-import Files from '../models/Couriers';
+import Files from '../models/Files';
+import Mail from '../../lib/Mail';
 
 class DeliveryController {
   async index(req, res) {
@@ -48,6 +49,7 @@ class DeliveryController {
     if (!courierExists) {
       return res.status(404).json({ error: 'Courier not found' });
     }
+    const { name, email } = courierExists;
 
     const signatureExists = await Files.findByPk(signatureId);
 
@@ -56,6 +58,12 @@ class DeliveryController {
     }
 
     const delivery = await Deliveries.create(req.body);
+
+    await Mail.sendMail({
+      to: `${name} <${email}>`,
+      subject: 'Teste',
+      text: 'Oi'
+    });
 
     return res.json(delivery);
   }
