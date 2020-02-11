@@ -79,8 +79,10 @@ Isso nos permite utilizar o `Sucrase`, para que node possa compreeender a syntax
 
 No seu `package.json` vamos criar um script de `DEBUG`, coloque esta linha dentro do bloco de `scripts` no seu `package.json`:
 
-```dist
+```json
+{
 + "dev:debug" : "nodemon --inspect src/server.js"
+}
 ```
 
 Crie uma pasta na raiz do projeto com o nome, `.vscode`, dentro dela crie um arquivo com o nome `launch.json`, dentro desse arquivo cole as seguintes configurações.
@@ -232,9 +234,12 @@ Se esquema de pastas deve estar assim:
 │   ├── controllers
 │   └── models
 ├── config
+│   ├── auth.js
 │   └── database.js
 ├── database
 │   ├── migrations
+│   ├── seeds
+│   └── index.js
 ├── app.js
 ├── routes.js
 └── server.js
@@ -348,4 +353,154 @@ Para rodar uma migration, basta executar:
 
 ```bash
 yarn sequelize db:migrate
+```
+
+O próximo passo é criar um `Model`, na pasta Models vamos criar o `Model` para essa tabela de usuários.
+
+```js
+import Sequelize, { Model } from 'sequelize';
+import bcrypt from 'bcryptjs';
+
+class Users extends Model {
+  static init(sequelize) {
+    super.init(
+      {
+        name: Sequelize.STRING,
+        email: Sequelize.STRING,
+        passwordHash: Sequelize.STRING,
+        password: Sequelize.VIRTUAL
+      },
+      {
+        sequelize
+      }
+    );
+    this.addHook('beforeSave', async user => {
+      if (user.password) {
+        user.passwordHash = await bcrypt.hash(user.password, 8);
+      }
+    });
+    return this;
+  }
+
+  checkPassword(password) {
+    return bcrypt.compare(password, this.passwordHash);
+  }
+}
+
+export default Users;
+```
+
+Depois de criar o Model, é importante criarmos o Controller deste Model, é sempre interessante seguir um padrão, visto que cada controller tem 5 faces, `ìndex`, `show`, `store` & `delete`
+
+## Envio de Arquivos
+
+Iremos utilizar a biblioteca `multer` pra envio de arquivos para o servidor.
+
+```bash
+yarn add multer
+```
+
+Na raiz do Projeto cie uma pasta chamada `tmp`, e dentro dessa pasta crie uma pasta com o nome `uploads`.
+
+```bash
+mkdir tmp tmp/uploads
+```
+
+Na pasta `config`, vamos criar o arquivo de configuração do Multer, vou chamar ele de `multerConfig.js`.
+
+```bash
+touch src/config/multerConfig.js
+```
+
+Agora, vamos editar esse arquivo de configuração do Multer.
+
+```js
+import multer from 'multer';
+import crypto from 'crypto';
+
+import { extname, resolve } from 'path';
+
+export default {
+  storage: multer.diskStorage({
+    destination: resolve(__dirname, '..', '..', 'tmp', 'uploads'),
+    filename: (req, file, cb) => {
+      crypto.randomBytes(16, (err, res) => {
+        if (err) return cb(err);
+
+        return cb(null, res.toString('hex') + extname(file.originalname));
+      });
+    }
+  })
+};
+```
+
+Para utilizar essa configuração, importe o muler, e o arquivo que acabamos de criar, e passe ele como um middleware da rota na qual você deseja enviar arquivos.
+
+```js
+import multer from 'multer';
+import multerConfig from './config/multerConfig';
+
+const upload = multer(multerConfig).single('file');
+
+routes.post('/files', upload, MeuControllerDeFiles);
+```
+
+## Comandos Úteis
+
+### Migrations
+
+Rodar Migrations
+
+```bash
+yarn sequelize db:migrate
+```
+
+Criar uma Migration
+
+```bash
+yarn sequelize migration:create --name=my-migration
+```
+
+Desfazer útilma migration
+
+```bash
+yarn sequelize db:migrate:undo
+```
+
+Desfazer todas as migrations
+
+```bash
+yarn sequelize db:migrate:undo:all
+```
+
+Desfazer uma migration específica
+
+```bash
+yarn sequelize db:migrate:undo:all --to XXXXXXXXXXXXXX-create-users.js
+```
+
+### Seeds
+
+Rodar seeds
+
+```bash
+yarn sequelize db:seed:all
+```
+
+Criar uma seed
+
+```bash
+yarn sequelize seed:generate --name users
+```
+
+Desfazer última seed
+
+```bash
+yarn sequelize seed:generate --name users
+```
+
+Desfazer uma seed especificayarn sequelize db:seed:undo:all
+
+```bash
+yarn sequelize db:seed:undo:all
 ```
