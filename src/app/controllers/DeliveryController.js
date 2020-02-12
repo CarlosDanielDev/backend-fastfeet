@@ -1,4 +1,6 @@
 import * as Yup from 'yup';
+import { format } from 'date-fns';
+import { pt } from 'date-fns/locale';
 import Deliveries from '../models/Deliveries';
 import Recipients from '../models/Recipients';
 import Couriers from '../models/Couriers';
@@ -61,8 +63,15 @@ class DeliveryController {
 
     await Mail.sendMail({
       to: `${name} <${email}>`,
-      subject: 'Teste',
-      text: 'Oi'
+      subject: 'Nova Encomenda',
+      template: 'newDelivery',
+      context: {
+        courier: name,
+        recipient: recipientExists.name,
+        date: format(delivery.createdAt, "'dia' dd 'de' MMMM', ás ' H:mm'h'", {
+          locale: pt
+        })
+      }
     });
 
     return res.json(delivery);
