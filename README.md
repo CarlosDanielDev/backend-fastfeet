@@ -504,3 +504,11 @@ Desfazer uma seed especificayarn sequelize db:seed:undo:all
 ```bash
 yarn sequelize db:seed:undo:all
 ```
+
+## Banco Chave&Valor **Redis**
+
+Utilizando o docker crie um container
+
+```bash
+docker run --name redisfastfeet -p 6379:6379 -d -t redis:alpine
+```

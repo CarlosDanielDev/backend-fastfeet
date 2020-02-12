@@ -1,12 +1,10 @@
 import * as Yup from 'yup';
-import { format } from 'date-fns';
-import { pt } from 'date-fns/locale';
 import Deliveries from '../models/Deliveries';
 import Recipients from '../models/Recipients';
 import Couriers from '../models/Couriers';
 import Files from '../models/Files';
-import Mail from '../../lib/Mail';
-
+import Queue from '../../lib/Queue';
+import NewDelivery from '../jobs/NewDelivery';
 class DeliveryController {
   async index(req, res) {
     const { page = 1 } = req.query;
@@ -51,7 +49,6 @@ class DeliveryController {
     if (!courierExists) {
       return res.status(404).json({ error: 'Courier not found' });
     }
-    const { name, email } = courierExists;
 
     const signatureExists = await Files.findByPk(signatureId);
 
@@ -61,17 +58,10 @@ class DeliveryController {
 
     const delivery = await Deliveries.create(req.body);
 
-    await Mail.sendMail({
-      to: `${name} <${email}>`,
-      subject: 'Nova Encomenda',
-      template: 'newDelivery',
-      context: {
-        courier: name,
-        recipient: recipientExists.name,
-        date: format(delivery.createdAt, "'dia' dd 'de' MMMM', ás ' H:mm'h'", {
-          locale: pt
-        })
-      }
+    await Queue.add(NewDelivery.key, {
+      courierExists,
+      recipientExists,
+      delivery
     });
 
     return res.json(delivery);
