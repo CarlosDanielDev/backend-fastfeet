@@ -1,15 +1,17 @@
 import * as Yup from 'yup';
+import { Op } from 'sequelize';
 import Couriers from '../models/Couriers';
 import Files from '../models/Files';
 
 class CourierController {
   async index(req, res) {
     const { page = 1, name } = req.query;
-    const couriers = await Couriers.findAll(
-      name
-        ? { where: { name }, limit: 15, offset: (page - 1) * 15 }
-        : { limit: 15, offset: (page - 1) * 15 }
-    );
+    const query = name ? { where: { name: { [Op.like]: `%${name}%` } } } : '';
+    const couriers = await Couriers.findAll({
+      ...query,
+      limit: 15,
+      offset: (page - 1) * 15
+    });
 
     return res.json(couriers);
   }

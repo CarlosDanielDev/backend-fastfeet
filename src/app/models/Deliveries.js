@@ -7,7 +7,10 @@ class Deliveries extends Model {
         recipientId: Sequelize.INTEGER,
         courierId: Sequelize.INTEGER,
         signatureId: Sequelize.INTEGER,
-        product: Sequelize.STRING
+        product: Sequelize.STRING,
+        startDate: Sequelize.DATE,
+        endDate: Sequelize.DATE,
+        canceledAt: Sequelize.DATE
       },
       { sequelize }
     );
@@ -20,7 +23,9 @@ class Deliveries extends Model {
       foreignKey: 'recipientId',
       as: 'recipient'
     });
+
     this.belongsTo(models.Couriers, { foreignKey: 'courierId', as: 'courier' });
+
     this.belongsTo(models.Files, {
       foreignKey: 'signatureId',
       as: 'signature'

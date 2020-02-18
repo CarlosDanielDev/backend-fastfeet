@@ -5,16 +5,12 @@ import Users from '../models/Users';
 class UserController {
   async index(req, res) {
     const { page = 1, name } = req.query;
-
-    const users = await Users.findAll(
-      name
-        ? {
-            where: { name: { [Op.like]: `%${name}%` } },
-            limit: 15,
-            offset: (page - 1) * 15
-          }
-        : { limit: 15, offset: (page - 1) * 15 }
-    );
+    const query = name ? { where: { name: { [Op.like]: `%${name}%` } } } : '';
+    const users = await Users.findAll({
+      ...query,
+      limit: 15,
+      offset: (page - 1) * 15
+    });
 
     return res.json(users);
   }

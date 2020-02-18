@@ -1,5 +1,5 @@
 import { format, parseISO } from 'date-fns';
-import { pt } from 'date-fns/locale/pt';
+import { pt } from 'date-fns/locale';
 import Mail from '../../lib/Mail';
 
 class NewDelivery {
@@ -23,7 +23,8 @@ class NewDelivery {
           {
             locale: pt
           }
-        )
+        ),
+        product: delivery.product
       }
     });
   }
