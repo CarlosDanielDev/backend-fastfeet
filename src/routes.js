@@ -52,7 +52,6 @@ routes.get('/delivery/:deliveryId/problems', DeliveryProblemController.show);
 routes.use(auth);
 
 // Users
-
 routes.get('/users', UserController.index);
 routes.get('/users/:user_id', UserController.show);
 routes.post('/users', UserController.store);
